@@ -25,5 +25,12 @@ pipeline {
       }
     }
 
+    stage("Validate With Terrascan") {
+    steps {
+        sh 'terrascan scan -i docker'
+      }
+    }
+
+
   }
 }
