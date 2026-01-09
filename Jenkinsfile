@@ -8,10 +8,16 @@ pipeline {
 
   stages {
 
+    stage("Validate With Terrascan") {
+      steps {
+        sh 'terrascan scan -i docker'
+      }
+    }
+
     stage("Docker Build") {
       steps {
         script {
-          dockerImage = docker.build(registry)
+          def dockerImage = docker.build(registry)
           dockerImage.tag("${env.BUILD_NUMBER}")
         }
       }
@@ -24,13 +30,18 @@ pipeline {
                   autoInstall: true
       }
     }
+  }
 
-    stage("Validate With Terrascan") {
-    steps {
-        sh 'terrascan scan -i docker'
-      }
+  post {
+    always {
+      recordIssues(
+        qualityGates: [
+          [criticality: 'FAILURE', integerThreshold: 10, threshold: 10.0, type: 'TOTAL_HIGH'],
+          [criticality: 'FAILURE', integerThreshold: 5, threshold: 5.0, type: 'NEW']
+        ],
+        sourceCodeRetention: 'LAST_BUILD',
+        tools: [grype()]
+      )
     }
-
-
   }
 }
